@@ -585,6 +585,11 @@ class AnalogSliderSensor(SliderSensor):
         )
         self.loops_per_msg = round(msg_interval / control_loop_interval)
 
+        # register event handlers
+        self.printer.register_event_handler(
+            "klippy:connect", self.handle_connect
+        )
+
         # other variables
         self.toolhead = None
         self.last_slider_pos = 0.0
