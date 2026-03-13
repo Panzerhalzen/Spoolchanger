@@ -1,6 +1,6 @@
 # Belay extruder-syncing sensor support
 #
-# Copyright (C) 2023-2025 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2023-2026 Ryan Ghosh <rghosh776@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
@@ -798,10 +798,10 @@ class LinearPotentiometer(AnalogPositionSensor):
         self.min_pos = min_position
         self.max_pos = max_position
         self.pos_span = self.max_pos - self.min_pos
-        self.min_pos_reading = config.get_float(
+        self.min_pos_reading = config.getfloat(
             "min_position_reading", default=0.0
         )
-        self.max_pos_reading = config.get_float(
+        self.max_pos_reading = config.getfloat(
             "max_position_reading", default=1.0
         )
 
