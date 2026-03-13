@@ -578,10 +578,10 @@ class AnalogSliderSensor(SliderSensor):
         )
 
         # read other values
-        msg_interval = config.getint(
+        msg_interval = config.getfloat(
             "message_interval",
-            default=5,
-            above=math.ceil(control_loop_interval),
+            default=5.0,
+            minval=control_loop_interval,
         )
         self.loops_per_msg = round(msg_interval / control_loop_interval)
 
