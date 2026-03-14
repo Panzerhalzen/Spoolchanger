@@ -706,7 +706,7 @@ class AnalogSliderSensor(SliderSensor):
         )
         self.gcode.respond_info(
             "Calibration complete:\n{}\nMake sure to update the printer config"
-            " file with these parameters so they will be kept across restarts:".format(
+            " file with these parameters so they will be kept across restarts.".format(
                 sensor_msg
             )
         )
