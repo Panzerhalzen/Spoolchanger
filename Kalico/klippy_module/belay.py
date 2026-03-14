@@ -91,20 +91,18 @@ class Belay:
         )
 
     def enable(self):
-        if self.enabled or self.user_disable:
+        if (
+            self.enabled
+            or self.user_disable
+            or not self.secondary_extruder.can_enable()
+        ):
             return
-        for condition in self.secondary_extruder.get_enable_conditions():
-            if not condition():
-                return
         self.enabled = True
         self.slider_sensor.handle_enable()
 
     def disable(self):
-        if not self.enabled:
+        if not self.enabled or not self.secondary_extruder.can_disable():
             return
-        for condition in self.secondary_extruder.get_disable_conditions():
-            if not condition():
-                return
         self.reset_multiplier()
         self.enabled = False
         self.slider_sensor.handle_disable()
@@ -845,11 +843,11 @@ class SecondaryExtruder(NamedConfigOptionChoice, ABC):
     def get_disable_events(self):
         return []
 
-    def get_enable_conditions(self):
-        return []
+    def can_enable(self):
+        return True
 
-    def get_disable_conditions(self):
-        return []
+    def can_disable(self):
+        return True
 
     @abstractmethod
     def set_multiplier(self, multiplier):
@@ -867,15 +865,10 @@ class TradRack(SecondaryExtruder):
         )
 
         # other variables
-        self.set_multiplier_fn = None
-        self.enable_conditions = []
-        self.disable_conditions = []
+        self.trad_rack = None
 
     def handle_connect(self):
-        trad_rack = self.printer.lookup_object("trad_rack")
-        self.set_multiplier_fn = trad_rack.set_fil_driver_multiplier
-        self.enable_conditions = [trad_rack.is_fil_driver_synced]
-        self.disable_conditions = [trad_rack.is_fil_driver_synced]
+        self.trad_rack = self.printer.lookup_object("trad_rack")
 
     @classmethod
     def get_name(cls):
@@ -887,14 +880,14 @@ class TradRack(SecondaryExtruder):
     def get_disable_events(self):
         return ["trad_rack:unsyncing_from_extruder"]
 
-    def get_enable_conditions(self):
-        return self.enable_conditions
+    def can_enable(self):
+        return self.trad_rack.is_fil_driver_synced()
 
-    def get_disable_conditions(self):
-        return self.disable_conditions
+    def can_disable(self):
+        return self.trad_rack.is_fil_driver_synced()
 
     def set_multiplier(self, multiplier):
-        self.set_multiplier_fn(multiplier)
+        self.trad_rack.set_fil_driver_multiplier(multiplier)
 
 
 class ExtruderStepper(SecondaryExtruder):
