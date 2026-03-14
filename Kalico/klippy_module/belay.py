@@ -571,7 +571,9 @@ class AnalogSliderSensor(SliderSensor):
             below=self.slider_travel_half,
         )
         multiplier_max_offset = config.getfloat(
-            "multiplier_max_offset", default=0.5, above=0.0, below=1.0
+            "multiplier_max_offset",
+            default=0.5,
+            above=0.0,
         )
         self.controller = SliderPIDController(
             config, slider_setpoint, multiplier_max_offset
