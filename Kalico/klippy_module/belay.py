@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 from abc import ABC, abstractmethod
+from collections import deque
 
 
 class Belay:
@@ -35,6 +36,18 @@ class Belay:
         monitor.register_direction_update_handler(
             self.slider_sensor.handle_extrusion_direction_update
         )
+
+        # get BELAY_NEXT command manager (creating it if it doesn't already
+        # exist)
+        next_cmd_manager_name = "belay_next_cmd_manager"
+        self.next_cmd_manager = self.printer.lookup_object(
+            next_cmd_manager_name, default=None
+        )
+        if self.next_cmd_manager is None:
+            self.next_cmd_manager = BelayNextCommandManager(self.printer)
+            self.printer.add_object(
+                next_cmd_manager_name, self.next_cmd_manager
+            )
 
         # register event handlers
         for event in self.secondary_extruder.get_enable_events():
@@ -125,6 +138,7 @@ class Belay:
     def start_next_cmd_generator(self, generator):
         self.next_cmd_generator = generator
         next(self.next_cmd_generator)
+        self.next_cmd_manager.note_active(self)
 
     cmd_QUERY_BELAY_help = "Report Belay sensor state"
 
@@ -173,12 +187,16 @@ class Belay:
         if self.next_cmd_generator:
             try:
                 next(self.next_cmd_generator)
+                self.next_cmd_manager.note_active(self)
             except Exception as e:
                 self.next_cmd_generator = None
+                self.next_cmd_manager.note_inactive(self)
                 if not isinstance(e, StopIteration):
                     raise
         else:
-            raise self.printer.command_error("BELAY_NEXT command is inactive")
+            raise self.printer.command_error(
+                "BELAY_NEXT command is inactive for belay {}".format(self.name)
+            )
 
     def get_status(self, eventtime):
         status = {
@@ -266,6 +284,43 @@ class ExtrusionDirectionMonitor:
             "last_extrusion_direction": self.last_direction,
             "last_flushed_extruder_position": self.last_flushed_e_pos,
         }
+
+
+class BelayNextCommandManager:
+    def __init__(self, printer):
+        self.printer = printer
+        self.belay_stack = deque()
+
+        # register commands
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "BELAY_NEXT",
+            "BELAY",
+            None,
+            self.cmd_BELAY_NEXT,
+            desc=Belay.cmd_BELAY_NEXT_help,
+        )
+
+    def note_active(self, belay):
+        try:
+            if self.belay_stack[-1] is belay:
+                return
+            self.belay_stack.remove(belay)
+        except (IndexError, ValueError):
+            pass
+        self.belay_stack.append(belay)
+
+    def note_inactive(self, belay):
+        try:
+            self.belay_stack.remove(belay)
+        except ValueError:
+            pass
+
+    def cmd_BELAY_NEXT(self, gcmd):
+        try:
+            self.belay_stack[-1].cmd_BELAY_NEXT(gcmd)
+        except IndexError:
+            raise self.printer.command_error("BELAY_NEXT command is inactive")
 
 
 class NamedConfigOptionChoice(ABC):
