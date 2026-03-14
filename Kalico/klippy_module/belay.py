@@ -642,10 +642,10 @@ class AnalogSliderSensor(SliderSensor):
             self.last_slider_pos / self.slider_travel_half * 100
         )
         if self.last_slider_pos >= 0.0:
-            return "compressed {}mm ({}%) from center".format(
+            return "compressed {:.3f}mm ({}%) from center".format(
                 self.last_slider_pos, slider_pos_percentage
             )
-        return "expanded {}mm ({}%) from center".format(
+        return "expanded {:.3f}mm ({}%) from center".format(
             -self.last_slider_pos, -slider_pos_percentage
         )
 
@@ -824,8 +824,10 @@ class LinearPotentiometer(AnalogPositionSensor):
     def update_calibration(self, min_position_reading, max_position_reading):
         self.min_pos_reading = min_position_reading
         self.max_pos_reading = max_position_reading
-        return "min_position_reading: {}\nmax_position_reading: {}".format(
-            min_position_reading, max_position_reading
+        return (
+            "min_position_reading: {:.6f}\nmax_position_reading: {:.6f}".format(
+                min_position_reading, max_position_reading
+            )
         )
 
 
