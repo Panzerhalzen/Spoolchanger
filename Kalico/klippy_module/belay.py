@@ -719,9 +719,12 @@ class AnalogSliderSensor(SliderSensor):
         self.last_raw_multiplier_offset = self.controller.update(
             self.last_slider_pos, e_pos
         )
-        self._set_multiplier(
-            self.last_raw_multiplier_offset,
-            print_msg=(self.msg_loop_counter == 0),
+        self.reactor.register_async_callback(
+            lambda e,
+            rmo=self.last_raw_multiplier_offset,
+            pm=(self.msg_loop_counter == 0): self._set_multiplier(
+                rmo, print_msg=pm
+            )
         )
         self.msg_loop_counter = (self.msg_loop_counter + 1) % self.loops_per_msg
 
