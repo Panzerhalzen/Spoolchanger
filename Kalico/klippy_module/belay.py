@@ -694,7 +694,7 @@ class AnalogSliderSensor(SliderSensor):
 
     def get_state_description(self):
         slider_pos_percentage = round(
-            self.last_slider_pos / self.slider_travel_half * 100
+            self.last_slider_pos / self.slider_travel_half * 100.0
         )
         if self.last_slider_pos >= 0.0:
             return "compressed {:.3f}mm ({}%) from center".format(
