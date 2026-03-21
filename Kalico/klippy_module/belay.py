@@ -843,6 +843,7 @@ class SliderPIDController:
         self.last_slider_pos = last_slider_pos
         self.last_e_pos = last_e_pos
         self.last_error = self.slider_setpoint - self.last_slider_pos
+        self.last_output = 0.0
         self.integral = 0.0
 
 
