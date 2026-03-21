@@ -810,11 +810,14 @@ class SliderPIDController:
         self.last_slider_pos = 0.0
         self.last_e_pos = 0.0
         self.last_error = 0.0
+        self.last_output = 0.0
         self.integral = 0.0
 
     def update(self, slider_pos, e_pos):
-        error = self.slider_setpoint - slider_pos
         de = abs(e_pos - self.last_e_pos)
+        if de == 0.0:
+            return self.last_output
+        error = self.slider_setpoint - slider_pos
 
         proportional = self.Kp * error
         self.integral += self.Ki * (self.last_error + error) / 2.0 * de
@@ -829,6 +832,7 @@ class SliderPIDController:
         self.last_slider_pos = slider_pos
         self.last_e_pos = e_pos
         self.last_error = error
+        self.last_output = output_clamped
 
         return output_clamped
 
