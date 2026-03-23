@@ -649,6 +649,7 @@ class AnalogSliderSensor(SliderSensor):
         self.toolhead = None
         self.last_slider_pos = 0.0
         self.last_raw_multiplier_offset = 0.0
+        self.last_direction = True
         self.msg_loop_counter = 0
         self.gcode = self.printer.lookup_object("gcode")
 
