@@ -862,7 +862,7 @@ class AnalogPositionSensor(ABC):
         pass
 
 
-class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
+class LinearPositionSensor(AnalogPositionSensor, NamedConfigOptionChoice):
     def __init__(self, config, min_position, max_position):
         self.min_pos = min_position
         self.max_pos = max_position
@@ -876,7 +876,7 @@ class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
 
     @classmethod
     def get_name(cls):
-        return "linear_potentiometer"
+        return "linear_position_sensor"
 
     def get_position(self, read_time, read_value):
         reading_span = self.max_pos_reading - self.min_pos_reading
@@ -892,6 +892,64 @@ class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
             "min_position_reading: {:.6f}\nmax_position_reading: {:.6f}".format(
                 min_position_reading, max_position_reading
             )
+        )
+
+
+class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
+    def __init__(self, config, min_position, max_position):
+        type_options = {
+            "linear_output": LinearPositionSensor,
+            "gnd_and_signal_with_pullup": LinearPotentiometerTwoWirePullup,
+        }
+        self.sensor = config.getchoice("sensor_wiring", type_options)(
+            config, min_position, max_position
+        )
+
+    @classmethod
+    def get_name(cls):
+        return "linear_potentiometer"
+
+    def get_position(self, read_time, read_value):
+        return self.sensor.get_position(read_time, read_value)
+
+    def update_calibration(self, min_position_reading, max_position_reading):
+        return self.sensor.update_calibration(
+            self, min_position_reading, max_position_reading
+        )
+
+
+class LinearPotentiometerTwoWirePullup(AnalogPositionSensor):
+    def __init__(self, config, min_position, max_position):
+        self.min_pos = min_position
+        self.max_pos = max_position
+        self.pos_span = self.max_pos - self.min_pos
+        self.r_pullup = config.getfloat(
+            "pullup_resistor", default=4700.0, above=0.0
+        )
+        self.r_min_pos = config.getfloat(
+            "min_position_resistance", default=0.0, minval=0.0
+        )
+        self.r_max_pos = config.getfloat(
+            "max_position_resistance", default=10000.0, minval=0.0
+        )
+        self.r_span = self.r_max_pos - self.r_min_pos
+
+    def get_position(self, read_time, read_value):
+        return self.min_pos + self.pos_span / self.r_span * (
+            self.r_pullup * read_value / (1.0 - read_value) - self.r_min_pos
+        )
+
+    def update_calibration(self, min_position_reading, max_position_reading):
+        self.r_min_pos = (
+            self.r_pullup * min_position_reading / (1.0 - min_position_reading)
+        )
+        self.r_span = self.r_pullup * (
+            max_position_reading / (1.0 - max_position_reading)
+            - min_position_reading / (1.0 - min_position_reading)
+        )
+        self.r_max_pos = self.r_min_pos + self.r_span
+        return "min_position_resistance: {:.6f}\nmax_position_resistance: {:.6f}".format(
+            self.r_min_pos, self.r_max_pos
         )
 
 
