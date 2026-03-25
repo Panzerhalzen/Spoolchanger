@@ -333,14 +333,14 @@ class NamedConfigOptionChoice(ABC):
 def get_selected_subclass(parent_class, config_option, config, default=None):
     choices = {}
     for cls in parent_class.__subclasses__():
-        choices[cls.get_name()] = cls
+        if issubclass(cls, NamedConfigOptionChoice):
+            choices[cls.get_name()] = cls
     if default is None:
         return config.getchoice(config_option, choices)
     if default not in choices:
         raise Exception(
-            "Default '{}' is not among subclass names of parent class {}".format(
-                default, parent_class
-            )
+            "Default '{}' is not the config choice name of a subclass of both"
+            "{} and NamedConfigOptionChoice".format(default, parent_class)
         )
     return config.getchoice(config_option, choices, default=default)
 
@@ -348,7 +348,7 @@ def get_selected_subclass(parent_class, config_option, config, default=None):
 # Slider sensors
 
 
-class SliderSensor(NamedConfigOptionChoice, ABC):
+class SliderSensor(ABC):
     @abstractmethod
     def __init__(self, config, belay):
         pass
@@ -377,7 +377,7 @@ class SliderSensor(NamedConfigOptionChoice, ABC):
         return {}
 
 
-class SingleDigitalSwitch(SliderSensor):
+class SingleDigitalSwitch(SliderSensor, NamedConfigOptionChoice):
     def __init__(self, config, belay):
         self.printer = config.get_printer()
         self.belay = belay
@@ -468,7 +468,7 @@ SWITCH_COMPRESSION = 0
 SWITCH_EXPANSION = 1
 
 
-class DualDigitalSwitch(SliderSensor):
+class DualDigitalSwitch(SliderSensor, NamedConfigOptionChoice):
     def __init__(self, config, belay):
         self.printer = config.get_printer()
         self.belay = belay
@@ -584,7 +584,7 @@ class DualDigitalSwitch(SliderSensor):
         )
 
 
-class AnalogSliderSensor(SliderSensor):
+class AnalogSliderSensor(SliderSensor, NamedConfigOptionChoice):
     def __init__(self, config, belay):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
@@ -848,7 +848,7 @@ class SliderPIDController:
         self.integral = 0.0
 
 
-class AnalogPositionSensor(NamedConfigOptionChoice, ABC):
+class AnalogPositionSensor(ABC):
     @abstractmethod
     def __init__(self, config, min_position, max_position):
         pass
@@ -862,7 +862,7 @@ class AnalogPositionSensor(NamedConfigOptionChoice, ABC):
         pass
 
 
-class LinearPotentiometer(AnalogPositionSensor):
+class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
     def __init__(self, config, min_position, max_position):
         self.min_pos = min_position
         self.max_pos = max_position
@@ -898,7 +898,7 @@ class LinearPotentiometer(AnalogPositionSensor):
 # Secondary extruders
 
 
-class SecondaryExtruder(NamedConfigOptionChoice, ABC):
+class SecondaryExtruder(ABC):
     @abstractmethod
     def __init__(self, config, belay):
         pass
@@ -920,7 +920,7 @@ class SecondaryExtruder(NamedConfigOptionChoice, ABC):
         pass
 
 
-class TradRack(SecondaryExtruder):
+class TradRack(SecondaryExtruder, NamedConfigOptionChoice):
     def __init__(self, config, belay):
         self.printer = config.get_printer()
         self.belay = belay
@@ -956,7 +956,7 @@ class TradRack(SecondaryExtruder):
         self.trad_rack.set_fil_driver_multiplier(multiplier)
 
 
-class ExtruderStepper(SecondaryExtruder):
+class ExtruderStepper(SecondaryExtruder, NamedConfigOptionChoice):
     def __init__(self, config, belay):
         self.printer = config.get_printer()
         self.belay = belay
