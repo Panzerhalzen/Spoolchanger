@@ -914,7 +914,7 @@ class LinearPotentiometer(AnalogPositionSensor, NamedConfigOptionChoice):
 
     def update_calibration(self, min_position_reading, max_position_reading):
         return self.sensor.update_calibration(
-            self, min_position_reading, max_position_reading
+            min_position_reading, max_position_reading
         )
 
 
